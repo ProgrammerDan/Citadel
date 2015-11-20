@@ -109,6 +109,20 @@ public class Utility {
         if (event.isCancelled()) {
             throw new ReinforcemnetFortificationCancelException();
         }
+	if (CitadelConfigManager.shouldLogReinforcements()) {
+		slb = new StringBuffer();
+		if (player != null) {
+			slb.append("Player ").append(player.getName()).append(" [").append(player.getUUID())
+			.append("]");
+		} else {
+			slb.append("Something ");
+		}
+		slb.append("reinforced a ").append(block.getType()).append(" with a ")
+			.append(rein.getMaterial()).append(" reinforcement at ")
+			.append(rein.getLocation());
+		
+	}
+
         // Now eat the materials
         
         // Handle special case with block reinforcements.
@@ -388,12 +402,26 @@ public class Utility {
     
     /**
      * 
+     * /ctb mode type break
+     *
      * @param The Player who broke the reinforcement
      * @param The Reinforcement broken.
      * @return Returns true if it is securable.
      * @return Returns false if it is no securable.
      */
     public static boolean reinforcementBroken(Player player, Reinforcement reinforcement) {
+    	StringBuffer slb = null;
+        if (CitadelConfigManager.shouldLogBreaks()) {
+		slb = new StringBuffer();
+		if (player != null) {
+			slb.append("Player ").append(player.getName()).append(" [").append(player.getUUID())
+			.append("]");
+		} else {
+			slb.append("Something ");
+		}
+		slb.append("broke a ").append(reinforcement.getMaterial()).append(" reinforcement at ")
+			.append(reinforcement.getLocation();
+	}
         Citadel.getReinforcementManager().deleteReinforcement(reinforcement);
         if (reinforcement instanceof PlayerReinforcement) {
             PlayerReinforcement pr = (PlayerReinforcement)reinforcement;
@@ -401,6 +429,7 @@ public class Utility {
             if (rng.nextDouble() <= pr.getHealth() * material.getPercentReturn()) {
                 Location location = pr.getLocation();
                 if (player != null){
+<<<<<<< HEAD
                     Inventory inv = player.getInventory();
                     if (CitadelConfigManager.shouldDropReinforcedBlock()){
                         // If we should drop a block instead
@@ -419,11 +448,22 @@ public class Utility {
                         }
                     }
                 }
-                else
+                else {
                 	dropItemAtLocation(location, new ItemStack(material.getMaterial()
                             , material.getReturnValue()));
+				}
+                if (CitadelConfigManager.shouldLogBreaks()) {
+                    slb.append(" - reinf mat refunded");
+					Citadel.Log(slb.toString());
+                }
+            } else if (CitadelConfigManager.shouldLogBreaks()) { 
+                slb.append(" - reinf mat lost");
+				Citadel.Log(slb.toString());
             }
             return pr.isSecurable();
+        }
+        if (CitadelConfigManager.shouldLogBreaks()) {
+            Citadel.Log(slb.toString());
         }
         return false;  // implicit isSecureable() == false
     }
