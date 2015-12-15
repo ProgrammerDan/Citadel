@@ -51,11 +51,12 @@ public class Utility {
 	 * @param The Group this reinforcement belongs too.
 	 * @param The Block this reinforcement is occurring on.
 	 * @param The ReinforcementType that is being reinforced on the block.
+	 * @param The ItemStack type of the block being placed (if CTF, null if CTR)
 	 * @return The PlayerReinforcement that comes from these parameters or null if certain checks failed.
 	 * @throws ReinforcemnetFortificationCancelException
 	 */
 	public static PlayerReinforcement createPlayerReinforcement(Player player, Group g, Block block,
-			ReinforcementType type) {
+			ReinforcementType type, ItemStack reinfMat) {
         if (g.isDisciplined()) {
             player.sendMessage(ChatColor.RED + "This group is disiplined.");
             return null;
@@ -69,11 +70,15 @@ public class Utility {
         final int invSize = inv.getSize();
         final ItemStack itemType = type.getItemStack();
         List<Integer> slots = new ArrayList<Integer>(type.getRequiredAmount());
-        int requirements = type.getRequiredAmount();
-        if (requirements <= 0) {
+        int requirementscheck =  type.getRequiredAmount();
+        if (requirementscheck <= 0) {
             Citadel.Log("Reinforcement requirements too low for " + itemType.getType().name());
             return null;
         }
+        if (reinfMat != null && itemType.isSimilar(reinfMat)){ // only in CTF.
+        	requirementscheck++;
+        }
+        int requirements = requirementscheck;
         try {
             for (int slot = 0; slot < invSize && requirements > 0; ++slot) {
                 final ItemStack slotItem = inv.getItem(slot);
@@ -83,19 +88,20 @@ public class Utility {
                 if (!slotItem.isSimilar(itemType)) {
                     continue;
                 }
-                requirements -= slotItem.getAmount();
+                requirementscheck -= slotItem.getAmount();
                 slots.add(slot);
             }
         } catch (Exception ex) {
             // Eat any inventory size mis-match exceptions, like with the Anvil
         }
-        if (requirements > 0) {
+        if (requirementscheck > 0) {
             // Not enough reinforcement material
             return null;
         }
         // Fire the creation event
         PlayerReinforcement rein = new PlayerReinforcement(block.getLocation(), 
-        		type.getHitPoints(), getIntFormofMaturation(System.currentTimeMillis(),type.getItemStack()), 
+        		type.getHitPoints(), getIntFormofMaturation(System.currentTimeMillis(),type.getItemStack()),
+        		getIntFormofAcidMaturation(System.currentTimeMillis(),type.getItemStack()),  
         		g, type.getItemStack(), g.getGroupId());
         ReinforcementCreationEvent event = new ReinforcementCreationEvent(rein, block, player);
         Bukkit.getPluginManager().callEvent(event);
@@ -103,7 +109,15 @@ public class Utility {
         	throw new ReinforcemnetFortificationCancelException();
         }
         // Now eat the materials
-        requirements = type.getRequiredAmount();
+        
+        // Handle special case with block reinforcements.
+        if (type.getMaterial().isBlock()){
+	        if (slots.size()>1){
+	        	if (inv.getItemInHand().isSimilar(itemType) && slots.get(0) != inv.getHeldItemSlot()){
+	        		requirements--;
+	        	}
+	        }
+        }
         for (final int slot : slots) {
             if (requirements <= 0) {
                 break;
@@ -147,7 +161,8 @@ public class Utility {
         	return null;
         }
 		PlayerReinforcement rein = new PlayerReinforcement(block.getLocation(), 
-        		type.getHitPoints(), getIntFormofMaturation(System.currentTimeMillis(),type.getItemStack()), 
+        		type.getHitPoints(), getIntFormofMaturation(System.currentTimeMillis(),type.getItemStack()),
+        		getIntFormofAcidMaturation(System.currentTimeMillis(),type.getItemStack()), 
         		g, type.getItemStack(), g.getGroupId());
         ReinforcementCreationEvent event = new ReinforcementCreationEvent(rein, block, player);
         Bukkit.getPluginManager().callEvent(event);
@@ -293,8 +308,13 @@ public class Utility {
           if (maturationTime > 0 && type.getMaturationScale() != 0) {
         	  // the default amount of minutes it takes to mature
               int normal = type.getMaturationTime();
-              int percentTo = maturationTime / normal; // the percent of time left of maturation
-              durabilityLoss = durabilityLoss / percentTo * type.getMaturationScale();
+              if (maturationTime == normal) {
+                  durabilityLoss = durability;
+              } else {
+                  double percentTo = (double) maturationTime / (double) normal; // the percent of time left of maturation
+                  durabilityLoss = (int) (((double) durabilityLoss / (1.0d - percentTo)) * (double) type.getMaturationScale());
+              } // this new code scales smoothly between MaturationScale and a very large number, being closer to 
+              // MaturationScale the closer to "done" a maturation cycle
           }
           if (durability < durabilityLoss) {
               durabilityLoss = durability;
@@ -316,7 +336,7 @@ public class Utility {
     /**
      * Used to get the amount of time left until a reinforcement is mature.
      * @param Reinforcement.
-     * @return Returns 0 if it is mature or the time in seconds until it is mature.
+     * @return Returns 0 if it is mature or the time in minutes until it is mature.
      */
     public static int timeUntilMature(Reinforcement reinforcement) {
         // Doesn't explicitly save the updated Maturation time into the cache.
@@ -336,6 +356,30 @@ public class Utility {
         }
         return 0;
     }
+    /**
+     * Used to get the amount of time left until a reinforcement's acid component is mature.
+     * @param Reinforcement.
+     * @return Returns 0 if it is mature or the time in minutes until it is mature.
+     */
+    public static int timeUntilAcidMature(Reinforcement reinforcement) {
+        // Doesn't explicitly save the updated Acid Maturation time into the cache.
+        //  That's the responsibility of the caller.
+        if (reinforcement instanceof PlayerReinforcement){
+            int maturationTime = reinforcement.getAcidTime();
+            if (maturationTime > 0) {
+                final int curMinute = (int)(System.currentTimeMillis() / 60000L);
+                if (curMinute >= maturationTime) {
+                    maturationTime = 0;
+                    reinforcement.setAcidTime(0);
+                } else {
+                    maturationTime = maturationTime - curMinute;
+                }
+            }
+            return (int) maturationTime; // should be small enough by now
+        }
+        return 0;
+	}
+    
     /**
      * 
      * @param The Player who broke the reinforcement
@@ -511,8 +555,9 @@ public class Utility {
     		return null;
     	Group g = GroupManager.getSpecialCircumstanceGroup(group);
     	PlayerReinforcement rein = new PlayerReinforcement(loc, dur, 
-    			getIntFormofMaturation(System.currentTimeMillis(),reinType.getItemStack())
-    			, g, reinType.getItemStack(), g.getGroupId());
+    			getIntFormofMaturation(System.currentTimeMillis(),reinType.getItemStack()),
+        		getIntFormofAcidMaturation(System.currentTimeMillis(),reinType.getItemStack()),
+        		g, reinType.getItemStack(), g.getGroupId());
     	ReinforcementCreationEvent event = 
     			new ReinforcementCreationEvent(rein, loc.getBlock(), p);
     	Bukkit.getPluginManager().callEvent(event);
@@ -546,15 +591,16 @@ public class Utility {
     /**
      * Creates a MultiBlockReinforcement and saves it to the db. This method is to be used only be other plugins. Citadel 
      * will not use this anywhere. 
-     * @param locs- The locations that make up the structure.
-     * @param g- The group this will belong too.
-     * @param dur- The durability this structure will have.
-     * @param mature- The amount of time until it is mature (in minutes).
+     * @param locs The locations that make up the structure.
+     * @param g The group this will belong too.
+     * @param dur The durability this structure will have.
+     * @param mature The amount of time until it is mature (in minutes).
+     * @param acid The amount of time until it is mature (if acid -- in minutes).
      * @return
      */
-    public static MultiBlockReinforcement createMultiBlockReinforcement(List<Location> locs, Group g, int dur, int mature){
+    public static MultiBlockReinforcement createMultiBlockReinforcement(List<Location> locs, Group g, int dur, int mature, int acid){
     	int nextID = rm.getNextReinforcementID();
-    	MultiBlockReinforcement rein = new MultiBlockReinforcement(locs, g, dur, mature, nextID);
+    	MultiBlockReinforcement rein = new MultiBlockReinforcement(locs, g, dur, mature, acid, nextID);
     	ReinforcementCreationEvent event = new ReinforcementCreationEvent(rein, rein.getLocation().getBlock(), null);
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {
@@ -625,6 +671,14 @@ public class Utility {
 				.getMaturationTime();
 		return maturation;
 	}
+    
+    private static int getIntFormofAcidMaturation(long creation, ItemStack stack) {
+		int maturation = (int)(creation / 60000) + 
+				ReinforcementType.
+				getReinforcementType(stack)
+				.getAcidTime();
+		return maturation;
+    }
     
     public static Block findPlantSoil(Block block){
     	final Set<Material> soilTypes = getPlantSoilTypes(block.getType());
