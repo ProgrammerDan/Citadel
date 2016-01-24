@@ -106,10 +106,13 @@ public class BlockListener implements Listener{
             event.setCancelled(true);
             return;
         }
-        
-		if (inv.contains(type.getMaterial(), type.getRequiredAmount())) {
+        int required = type.getRequiredAmount();
+        if (type.getItemStack().isSimilar(event.getItemInHand())){
+        	required++;
+        }
+		if (inv.containsAtLeast(type.getItemStack(), required)) {
 			try {
-				if (createPlayerReinforcement(p, state.getGroup(), b, type) == null) {
+				if (createPlayerReinforcement(p, state.getGroup(), b, type, event.getItemInHand()) == null) {
 						p.sendMessage(ChatColor.RED + String.format("%s is not a reinforcible material ", b.getType().name()));
 				} else {
 					state.checkResetMode();
@@ -539,7 +542,7 @@ public class BlockListener implements Listener{
                     } else {
                     	try {
                         createPlayerReinforcement(player, state.getGroup(),
-                        		block, state.getReinforcementType());
+                        		block, state.getReinforcementType(), null);
                     	}catch(ReinforcemnetFortificationCancelException e){
                     		Citadel.Log("ReinforcementFortificationCancelException occured in BlockListener, PlayerInteractEvent " + e.getStackTrace());
                     	}
