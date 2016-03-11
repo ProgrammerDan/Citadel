@@ -91,13 +91,15 @@ public class UpdateReinforcements extends PlayerCommand{
 			for (Reinforcement r: reins){
 				if (r instanceof PlayerReinforcement){
 					PlayerReinforcement rein = (PlayerReinforcement) r;
-					if (rein.getGroup().getName().equals(old.getName()))
+					if (rein.getGroup().getName().equals(old.getName())) {
 						rein.setGroup(n);
+					}
 				}
 				else if (r instanceof MultiBlockReinforcement){
 					MultiBlockReinforcement rein = (MultiBlockReinforcement) r;
-					if (rein.getGroup().getName().equals(old.getName()))
+					if (rein.getGroup().getName().equals(old.getName())) {
 						rein.setGroup(n);
+					}
 				}
 			}
 			if (!p.isOnline())
@@ -127,23 +129,27 @@ public class UpdateReinforcements extends PlayerCommand{
 				if (r instanceof PlayerReinforcement){
 					PlayerReinforcement rein = (PlayerReinforcement) r;
 					String name = rein.getGroup().getName();
-					if (groups.contains(name))
+					if (groups.contains(name)) {
 						continue;
+					}
 					groups.add(name);
 				}
 				else if (r instanceof MultiBlockReinforcement){
 					MultiBlockReinforcement rein = (MultiBlockReinforcement) r;
 					String name = rein.getGroup().getName();
-					if (groups.contains(name))
+					if (groups.contains(name)) {
 						continue;
+					}
 					groups.add(name);
 				}
 			}
-			if (!p.isOnline())
+			if (!p.isOnline()) {
 				return;
-			String names = "";
-			for (String g: groups)
-				names += g + " ";
+			}
+			StringBuilder names = new StringBuilder();
+			for (String g: groups) {
+				names.append(g).append(" ");
+			}
 			
 			p.sendMessage(ChatColor.GREEN + "The groups in this chunk are: " + names);
 		}

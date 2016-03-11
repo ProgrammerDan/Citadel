@@ -3,10 +3,13 @@ package vg.civcraft.mc.citadel.command;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
+import vg.civcraft.mc.citadel.Citadel;
+import vg.civcraft.mc.citadel.CitadelConfigManager;
 import vg.civcraft.mc.citadel.command.commands.Acid;
 import vg.civcraft.mc.citadel.command.commands.AreaReinforce;
 import vg.civcraft.mc.citadel.command.commands.Bypass;
@@ -56,6 +59,11 @@ public class CommandHandler {
 			if (args.length < command.getMinArguments() || args.length > command.getMaxArguments()){
 				helpPlayer(command, sender);
 				return true;
+			}
+			
+			if (CitadelConfigManager.shouldLogPlayerCommands()) {
+				Citadel.getInstance().getLogger().log(Level.INFO, "{0} issued {1} {2}", 
+						new Object[] {sender.getName(), command.getName(), String.join(" ", args)});
 			}
 			command.execute(sender, args);
 		}

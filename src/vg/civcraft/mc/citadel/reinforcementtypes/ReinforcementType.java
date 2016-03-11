@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelConfigManager;
 
 public class ReinforcementType {
@@ -59,6 +60,13 @@ public class ReinforcementType {
 			List<String> lore = CitadelConfigManager.getLoreValues(type);
 			new ReinforcementType(mat, amount, percentReturn, returnValue,
 					hitpoints, maturation, acid, maturation_scale, lore);
+			if (CitadelConfigManager.shouldLogInternal()) {
+				Citadel.Log(String.format("Adding Reinforcement {0} with:\n  material {1} \n  amount {2} " +
+						"\n  return rate {3} \n  return? {4} \n  health {5} \n  maturation {6} " +
+						"\n  acid {7} \n  scaling {8} \n  lore: {9}", 
+						type, mat.toString(), amount, percentReturn, returnValue, hitpoints,
+						maturation, acid, maturation_scale, (lore != null ? String.join("   ", lore) : "")));
+			}
 		}
     }
 	/**

@@ -71,11 +71,13 @@ public class Stats extends PlayerCommand{
 		if (!(sender instanceof Player))
 			return new ArrayList<String>();
 
-		if (args.length == 0)
+		if (args.length == 0) {
 			return GroupTabCompleter.complete(null, null, (Player)sender);
-		else if (args.length == 1)
+		} else if (args.length == 1) {
 			return GroupTabCompleter.complete(args[0], null, (Player)sender);
-		else return  new ArrayList<String>();
+		} else {
+			return new ArrayList<String>();
+		}
 
 	}
 
@@ -91,14 +93,18 @@ public class Stats extends PlayerCommand{
 		
 		@Override
 		public void run() {
+			if (g == null || p == null) {
+				return;
+			}
 			String message = ChatColor.GREEN + "The amount of reinforcements on this group are: ";
 			int count = Citadel.getCitadelDatabase().getReinCountForGroup(g.getName());
-			message += count;
+			message += Integer.toString(count);
 			synchronized(run){
 				run.remove(g);
 			}
-			if (p != null && !p.isOnline()) // meh be safe
+			if (p != null && !p.isOnline()) {// meh be safe
 				return;
+			}
 			p.sendMessage(message);
 		}
 		

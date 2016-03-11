@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.bukkit.Material;
 
+import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelConfigManager;
 
 public class NonReinforceableType {
@@ -15,6 +16,9 @@ public class NonReinforceableType {
 		List<String> materials = CitadelConfigManager.getNonReinforceableTypes();
 		for (String x: materials){
 			mats.add(Material.getMaterial(x));
+			if (CitadelConfigManager.shouldLogInternal()) {
+				Citadel.Log(String.format("Adding Non-reinforceable: {0}", x));
+			}
 		}
 	}
 	

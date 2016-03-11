@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.bukkit.Material;
 
+import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelConfigManager;
 
 public class NaturalReinforcementType {
@@ -26,6 +27,10 @@ public class NaturalReinforcementType {
 			Material mat = CitadelConfigManager.getNaturalReinforcementMaterial(type);
 			int dur = CitadelConfigManager.getNaturalReinforcementHitPoints(type);
 			new NaturalReinforcementType(mat, dur);
+			if (CitadelConfigManager.shouldLogInternal()) {
+				Citadel.Log(String.format("Adding Natural Reinforcement: {0} w/ health {1}", 
+						mat.toString(), dur));
+			}
 		}
 	}
 	/**
