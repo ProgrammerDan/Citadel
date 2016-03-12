@@ -3,7 +3,6 @@ package vg.civcraft.mc.citadel.command.commands;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -12,11 +11,10 @@ import org.bukkit.entity.Player;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameAPI;
-import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 import vg.civcraft.mc.namelayer.command.TabCompleters.GroupTabCompleter;
 import vg.civcraft.mc.namelayer.group.Group;
 
-public class Stats extends PlayerCommand{
+public class Stats extends PlayerCommandMiddle{
 
 	private List<Group> run = new ArrayList<Group>();
 	private GroupManager gm = NameAPI.getGroupManager();
@@ -37,7 +35,7 @@ public class Stats extends PlayerCommand{
 		}
 		Player p = (Player) sender;
 		if (!(p.isOp() || p.hasPermission("citadel.admin"))){
-			p.sendMessage(ChatColor.RED + "You do not have permission for this command.");
+			sendAndLog(p, ChatColor.RED, "You do not have permission for this command.");
 			return true;
 		}
 		if (args.length == 0){
@@ -47,17 +45,17 @@ public class Stats extends PlayerCommand{
 		Group g = gm.getGroup(args[0]);
 		
 		if (g == null){
-			p.sendMessage(ChatColor.RED + "This group does not exist.");
+			sendAndLog(p, ChatColor.RED, "This group does not exist.");
 			return true;
 		}
 		UUID uuid = NameAPI.getUUID(p.getName());
 		if (!g.isMember(uuid) && !(p.isOp() || p.hasPermission("citadel.admin"))){
-			p.sendMessage(ChatColor.RED + "You are not on this group.");
+			sendAndLog(p, ChatColor.RED, "You are not on this group.");
 			return true;
 		}
 		synchronized(run){
 			if (run.contains(g)){
-				p.sendMessage(ChatColor.RED + "That group is already being searched for.");
+				sendAndLog(p, ChatColor.RED, "That group is already being searched for.");
 				return true;
 			}
 			run.add(g);
@@ -96,7 +94,7 @@ public class Stats extends PlayerCommand{
 			if (g == null || p == null) {
 				return;
 			}
-			String message = ChatColor.GREEN + "The amount of reinforcements on this group are: ";
+			String message = "The amount of reinforcements on this group are: ";
 			int count = Citadel.getCitadelDatabase().getReinCountForGroup(g.getName());
 			message += Integer.toString(count);
 			synchronized(run){
@@ -105,7 +103,7 @@ public class Stats extends PlayerCommand{
 			if (p != null && !p.isOnline()) {// meh be safe
 				return;
 			}
-			p.sendMessage(message);
+			sendAndLog(p, ChatColor.GREEN, message);
 		}
 		
 	}
@@ -119,13 +117,12 @@ public class Stats extends PlayerCommand{
 		
 		@Override
 		public void run() {
-			String message = ChatColor.GREEN + "The amount of reinforcements on the server are: ";
+			String message = "The amount of reinforcements on the server are: ";
 			int count = Citadel.getCitadelDatabase().getReinCountForAllGroups();
 			message += count;
 			if (p != null && !p.isOnline()) // meh be safe
 				return;
-			p.sendMessage(message);
+			sendAndLog(p, ChatColor.GREEN, message);
 		}
 	}
-
 }

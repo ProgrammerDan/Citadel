@@ -61,10 +61,6 @@ public class CommandHandler {
 				return true;
 			}
 			
-			if (CitadelConfigManager.shouldLogPlayerCommands()) {
-				Citadel.getInstance().getLogger().log(Level.INFO, "{0} issued {1} {2}", 
-						new Object[] {sender.getName(), command.getName(), String.join(" ", args)});
-			}
 			command.execute(sender, args);
 		}
 		return true;

@@ -15,12 +15,11 @@ import vg.civcraft.mc.citadel.ReinforcementManager;
 import vg.civcraft.mc.citadel.reinforcement.MultiBlockReinforcement;
 import vg.civcraft.mc.citadel.reinforcement.PlayerReinforcement;
 import vg.civcraft.mc.citadel.reinforcement.Reinforcement;
-import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameAPI;
 import vg.civcraft.mc.namelayer.group.Group;
 
-public class UpdateReinforcements extends PlayerCommand{
+public class UpdateReinforcements extends PlayerCommandMiddle{
 
 	private GroupManager gm = NameAPI.getGroupManager();
 	
@@ -40,16 +39,17 @@ public class UpdateReinforcements extends PlayerCommand{
 		}
 		Player p = (Player) sender;
 		if (!p.hasPermission("citadel.admin") || !p.isOp()){
-			return false;
+			sendAndLog(p, ChatColor.RED, "Nice try");
+			return true;
 		}
 		
 		if (args.length == 0){
-			p.sendMessage(ChatColor.GREEN + "Searching for groups in current chunk.");
+			sendAndLog(p, ChatColor.GREEN, "Searching for groups in current chunk.");
 			Bukkit.getScheduler().runTaskAsynchronously(Citadel.getInstance(), new FindGroups(p, p.getLocation()));
 			return true;
 		}
 		else if (args.length == 1){
-			p.sendMessage(ChatColor.RED + "Please enter two groups.");
+			sendAndLog(p, ChatColor.RED, "Please enter two groups.");
 			return true;
 		}
 		
@@ -57,12 +57,12 @@ public class UpdateReinforcements extends PlayerCommand{
 		Group n = gm.getGroup(args[1]);
 		
 		if (old == null || n == null){
-			p.sendMessage(ChatColor.RED + "One of the groups does not exist.");
+			sendAndLog(p, ChatColor.RED, "One of the groups does not exist.");
 			return true;
 		}
 		
+		sendAndLog(p, ChatColor.GREEN, "Beginning to change groups.");
 		Bukkit.getScheduler().runTaskAsynchronously(Citadel.getInstance(), new UpdateGroups(p, p.getLocation().getChunk(), old, n));
-		p.sendMessage(ChatColor.GREEN + "Beginning to change groups.");
 		return true;
 	}
 
@@ -105,7 +105,7 @@ public class UpdateReinforcements extends PlayerCommand{
 			if (!p.isOnline())
 				return;
 			
-			p.sendMessage(ChatColor.GREEN + "The groups have been updated.");
+			sendAndLog(p, ChatColor.GREEN, "The groups have been updated.");
 		}
 		
 	}
@@ -151,7 +151,7 @@ public class UpdateReinforcements extends PlayerCommand{
 				names.append(g).append(" ");
 			}
 			
-			p.sendMessage(ChatColor.GREEN + "The groups in this chunk are: " + names);
+			sendAndLog(p, ChatColor.GREEN, "The groups in this chunk are: " + names);
 		}
 		
 	}

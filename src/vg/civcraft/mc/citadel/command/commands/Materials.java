@@ -8,9 +8,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
-import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 
-public class Materials extends PlayerCommand{
+public class Materials extends PlayerCommandMiddle{
 
 	public Materials(String name) {
 		super(name);
