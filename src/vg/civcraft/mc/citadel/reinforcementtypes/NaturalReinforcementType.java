@@ -2,6 +2,7 @@ package vg.civcraft.mc.citadel.reinforcementtypes;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.Material;
 
@@ -28,8 +29,8 @@ public class NaturalReinforcementType {
 			int dur = CitadelConfigManager.getNaturalReinforcementHitPoints(type);
 			new NaturalReinforcementType(mat, dur);
 			if (CitadelConfigManager.shouldLogInternal()) {
-				Citadel.Log(String.format("Adding Natural Reinforcement: {0} w/ health {1}", 
-						mat.toString(), dur));
+				Citadel.getInstance().getLogger().log(Level.INFO, "Adding Natural Reinforcement: {0} w/ health {1}", 
+						new Object[] {mat.toString(), dur});
 			}
 		}
 	}

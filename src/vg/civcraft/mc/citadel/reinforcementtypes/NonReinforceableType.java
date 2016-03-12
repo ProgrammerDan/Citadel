@@ -2,6 +2,7 @@ package vg.civcraft.mc.citadel.reinforcementtypes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.Material;
 
@@ -17,7 +18,7 @@ public class NonReinforceableType {
 		for (String x: materials){
 			mats.add(Material.getMaterial(x));
 			if (CitadelConfigManager.shouldLogInternal()) {
-				Citadel.Log(String.format("Adding Non-reinforceable: {0}", x));
+				Citadel.getInstance().getLogger().log(Level.INFO, "Adding Non-reinforceable: {0}", x);
 			}
 		}
 	}

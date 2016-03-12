@@ -301,10 +301,6 @@ public class CitadelReinforcementData {
 					"CitadelReinforcementData getReinforcement called with null");
 			return null;
 		}
-		if (CitadelConfigManager.shouldLogInternal()) {
-			Citadel.getInstance().getLogger().log(Level.WARNING,
-					"CitadelReinforcementData getReinforcement called for {0}", loc);
-		}
 		reconnectAndReinitialize();
 		PreparedStatement getRein = db.prepareStatement(this.getRein);
 		try {
@@ -318,7 +314,7 @@ public class CitadelReinforcementData {
 			getRein.setString(4, formatChunk);
 			getRein.setString(5, loc.getWorld().getName());
 			ResultSet set = getRein.executeQuery();
-			if (!set.next()){
+			if (!set.next()) {
 				set.close();
 				return null;
 			}
@@ -391,6 +387,10 @@ public class CitadelReinforcementData {
 		} catch (SQLException e) {
 			Citadel.getInstance().getLogger().log(Level.SEVERE, "Failed while retrieving reinforcement from database", e);
 		}
+		if (CitadelConfigManager.shouldLogInternal()) {
+			Citadel.getInstance().getLogger().log(Level.WARNING,
+					"CitadelReinforcementData getReinforcement failed for {0}", loc);
+		}
 		return null;
 	}
 	
@@ -410,7 +410,7 @@ public class CitadelReinforcementData {
 		String formatChunk = formatChunk(chunk);
 		if (CitadelConfigManager.shouldLogInternal()) {
 			Citadel.getInstance().getLogger().log(Level.WARNING,
-					"CitadelReinforcementData getReinforcement called for {0}", formatChunk);
+					"CitadelReinforcementData getReinforcements chunk called for {0}", formatChunk);
 		}
 		List<Reinforcement> reins = new ArrayList<Reinforcement>();
 		try {

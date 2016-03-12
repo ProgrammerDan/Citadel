@@ -6,7 +6,7 @@
 internal_logging: true
 command_logging: true
 break_logging: true
-reinf_logging: true
+reinf_logging: false
 reinforcements:
  diamond:
   material: DIAMOND
