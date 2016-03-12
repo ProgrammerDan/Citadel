@@ -3,6 +3,7 @@ package vg.civcraft.mc.citadel.command.commands;
 import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.citadel.Citadel;
@@ -15,11 +16,10 @@ public abstract class PlayerCommandMiddle extends PlayerCommand {
 		super(name);
 	}
 
-	protected void sendAndLog(Player receiver, ChatColor color, String message) {
+	protected void sendAndLog(CommandSender receiver, ChatColor color, String message) {
 		receiver.sendMessage(color + message);
 		if (CitadelConfigManager.shouldLogPlayerCommands()) {
 			Citadel.getInstance().getLogger().log(Level.INFO, "Sent {0} reply {1}", new Object[]{receiver.getName(), message});
 		}
 	}
-
 }
