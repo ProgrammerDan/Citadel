@@ -7,7 +7,6 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import vg.civcraft.mc.citadel.command.CommandHandler;
@@ -19,10 +18,10 @@ import vg.civcraft.mc.citadel.listener.GroupsListener;
 import vg.civcraft.mc.citadel.listener.InventoryListener;
 import vg.civcraft.mc.citadel.listener.WorldListener;
 import vg.civcraft.mc.citadel.misc.CitadelStatics;
+import vg.civcraft.mc.citadel.reinforcementtypes.ExclusiveReinforcementType;
 import vg.civcraft.mc.citadel.reinforcementtypes.NaturalReinforcementType;
 import vg.civcraft.mc.citadel.reinforcementtypes.NonReinforceableType;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
-import vg.civcraft.mc.namelayer.NameLayerPlugin;
 
 public class Citadel extends JavaPlugin{
 	private static Logger logger;
@@ -46,6 +45,7 @@ public class Citadel extends JavaPlugin{
 		ReinforcementType.initializeReinforcementTypes();
 		NaturalReinforcementType.initializeNaturalReinforcementsTypes();
 		NonReinforceableType.initializeNonReinforceableTypes();
+		ExclusiveReinforcementType.initializeExclusiveReinforcementTypes();
 		initializeDatabase();
 		
 		rm = new ReinforcementManager(db);

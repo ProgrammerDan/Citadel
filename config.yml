@@ -2,7 +2,11 @@
 # requirements is the amount of the material needed to create a reinforcement.
 # return is the amount of material to return.
 # percent_chance is the chance to return the block. Scales with damage.
-# scale_amount is, if maturation is enabled, the amount extra to damage a block if it is not fully matured.  The forumla for calculating the extra damage is 1/((time left of maturation) / (default amount of time for maturation)) * scale.  So if a block has 5 minutes left of maturation on a 10 minute default period with a scale of 3 we do 1/(5 / 10) * 3 = 6 damage. Setting scale amount to 0 disables this function.
+# scale_amount is, if maturation is enabled, the amount extra to damage a block if it is not fully matured.  The forumla for calculating the extra damage is 1/(1-((time left of maturation) / (default amount of time for maturation))) * scale.  So if a block has 5 minutes left of maturation on a 10 minute default period with a scale of 3 we do 1/(5 / 10) * 3 = 6 damage. Setting scale amount to 0 disables this function.
+internal_logging: true
+command_logging: true
+break_logging: true
+reinf_logging: false
 reinforcements:
  diamond:
   material: DIAMOND
@@ -12,11 +16,16 @@ reinforcements:
   hit_points: 1800
 # mature time is in minutes
   mature_time: 1440
-  scale_amount: 0
+  acid_time: 1440
+  scale_amount: 1
   lore:
 # Delete the comment char to use lore.  Three spaces are required 
 # after lore. You can add multiple lines by adding -
 #   - Some string representation required for this reinforcement.
+#
+# # Uncomment below to add limits to what blocks this reinforcement can be applied to
+# reinforceables:
+#   - STONE
  iron:
   material: IRON_INGOT
   requirements: 1
@@ -24,7 +33,8 @@ reinforcements:
   percent_chance: 100
   hit_points: 250
   mature_time: 60
-  scale_amount: 0
+  acid_time: 60
+  scale_amount: 1
   lore:
  stone:
   material: STONE
@@ -33,7 +43,8 @@ reinforcements:
   percent_chance: 100
   hit_points: 25
   mature_time: 10
-  scale_amount: 0
+  acid_time: 10
+  scale_amount: 1
   lore:
  bedrock:
   material: BEDROCK
@@ -42,7 +53,8 @@ reinforcements:
   percent_chance: 100
   hit_points: 147483646
   mature_time: 147483646
-  scale_amount: 0
+  acid_time: 147483646
+  scale_amount: 1
   lore:
 #natural_reinforcements:
  #diamond_ore:
@@ -85,9 +97,13 @@ acidblock_material: GOLD_BLOCK
 # If set to true then instead of dropping the reinforcement a block with the specified reinforcement value will be dropped.
 drop_reinforced_block: false
 save_interval_ticks: 500
+# reinforcement_damageMultiplier is m where BlockDamage = 2 ^ (n/m) where n is equal to the number of days the group has been inactive
+reinforcement_damageMultiplier: 7
 mysql:
  hostname: "localhost"
  port: 3306
  dbname: "bukkit"
  username: "bukkit"
  password: ""
+# Shows reinforcement information as percentile value
+show_health_as_percent: true

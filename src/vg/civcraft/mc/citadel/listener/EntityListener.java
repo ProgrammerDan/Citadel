@@ -6,6 +6,7 @@ import static vg.civcraft.mc.citadel.Utility.maybeReinforcementDamaged;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -49,11 +50,17 @@ public class EntityListener implements Listener{
             Block block = Utility.getRealBlock(b);
             //if it's a plant we want to check the reinforcement of the soil block
             if(Utility.isPlant(block)) {
-            	Block soilBlock = block.getRelative(BlockFace.DOWN);
-            	if(Citadel.getReinforcementManager().isReinforced(soilBlock)) {
-            		block.getDrops().clear();
-            		iterator.remove();
-            	}
+                // TODO: Ideally we defer evaluating drops for crops until after soil is checked.
+                // So process is, find soil; link soil and block here.
+                // If soil is exploded (reinf breached) then let this block drop its stuff, otherwise
+                // don't. 
+                // For now, we'll just remove the drops.
+                Block soilBlock = Utility.findPlantSoil(block);
+                if(soilBlock != null && Citadel.getReinforcementManager().isReinforced(soilBlock)) {
+                    block.getDrops().clear();
+                    iterator.remove();
+                    continue;
+                }
             }
             // getRealBlock should return the block we care about so if its already in the list we know it is a double block and was already handled.
             if (blocks.contains(block)){
@@ -68,7 +75,7 @@ public class EntityListener implements Listener{
 	                iterator.remove();
 	            }
             } catch (NoClassDefFoundError e){
-            	Citadel.Log("NoClassDefFoundError");
+            	Citadel.getInstance().getLogger().log(Level.WARNING, "Class Definition not found in explode", e);
             }
         }
     }
@@ -83,21 +90,16 @@ public class EntityListener implements Listener{
         ecbe.setCancelled(maybeReinforcementDamaged(ecbe.getBlock()));
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void spawn(CreatureSpawnEvent cse) {
     	ReinforcementManager reinforcementManager = Citadel.getReinforcementManager();
         EntityType type = cse.getEntityType();
-        if (type != EntityType.IRON_GOLEM && type != EntityType.SNOWMAN) return;
+        if (type != EntityType.IRON_GOLEM && type != EntityType.SNOWMAN && type != EntityType.WITHER && type != EntityType.SILVERFISH) return;
 
         for (Block block : getGolemBlocks(type, cse.getLocation().getBlock())) {
             Reinforcement reinforcement = reinforcementManager.getReinforcement(block);
             if (reinforcement != null) {
-            	/*
-            	Citadel.verbose(
-                        VerboseMsg.GolemCreated,
-            			reinforcement.getBlock().getLocation().toString());
-            			*/
-                reinforcementManager.deleteReinforcement(reinforcement);
+            	cse.setCancelled(true);
             }
         }
     }
