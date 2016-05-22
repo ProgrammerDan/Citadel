@@ -1,6 +1,7 @@
 package vg.civcraft.mc.citadel.reinforcement;
 
-import java.util.UUID;
+import java.sql.Timestamp;
+import java.util.logging.Level;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -10,64 +11,103 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Openable;
 
 import vg.civcraft.mc.citadel.Citadel;
+import vg.civcraft.mc.citadel.CitadelConfigManager;
 import vg.civcraft.mc.citadel.Utility;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
-import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
+import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameAPI;
 import vg.civcraft.mc.namelayer.group.Group;
-import vg.civcraft.mc.namelayer.group.groups.PublicGroup;
-import vg.civcraft.mc.namelayer.permission.GroupPermission;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class PlayerReinforcement extends Reinforcement{
-
+	private transient int gid;
 	private Group g;
-	private GroupPermission gp;
+	private static GroupManager gm;
 	private boolean isInsecure = false;
 	private ItemStack stack;
 	
 	public PlayerReinforcement(Location loc, int health,
-			int creation, Group g, ItemStack stack) {
-		super(loc, stack.getType(), health, creation);
+			int creation, int acid, Group g, ItemStack stack) {
+		super(loc, stack.getType(), health, creation, acid);
 		this.g = g;
 		this.stack = stack;
-		gp = NameAPI.getGroupManager().getPermissionforGroup(g);
+		if (gm == null) {
+			gm = NameAPI.getGroupManager();
+		}
+		this.gid = g.getGroupId();
+	}	
+	
+	public boolean canBypass(Player p) {
+		checkValid();
+		if (g == null) {
+			return false;
+		}
+		return gm.hasAccess(g.getName(), p.getUniqueId(), PermissionType.getPermission("BYPASS_REINFORCEMENT"));
 	}
 	
-	/**
-	 * Returns true if the player has access to do the specified 
-	 * PermissionType on this reinforcement.
-	 * @param PermissionType
-	 * @param Player
-	 * @return true if the player has access or false if the player
-	 * doesn't have access to that specified permission or isn't on the
-	 * group.
-	 */
-	public boolean isAccessible(Player p, PermissionType... pType){
-		return isAccessible(p.getUniqueId(), pType);
+	public boolean canAccessCrops(Player p) {
+		checkValid();
+		if (g == null) {
+			return false;
+		}
+		return gm.hasAccess(g.getName(), p.getUniqueId(), PermissionType.getPermission("CROPS"));
 	}
 	
-	public boolean isAccessible(UUID u, PermissionType... pType){
+	public boolean canAccessChests(Player p) {
 		checkValid();
-		PlayerType type = g.getPlayerType(u);
-		// if it is a public group we want it to check even if no
-				// PlayerType
-				
-		if (type == null && !(g instanceof PublicGroup))
+		if (g == null) {
 			return false;
-		return gp.isAccessible(type, pType);
+		}
+		return gm.hasAccess(g.getName(), p.getUniqueId(), PermissionType.getPermission("CHESTS"));
 	}
-	/**
-	 * Is used to see if a player has permission to bypass a reinforcement.
-	 * @param The Player who wants to bypass a Reinforcemet.
-	 * @return Returns if the Player can or not.
-	 */
-	public boolean isBypassable(Player p){
+	
+	public boolean canAccessDoors(Player p) {
 		checkValid();
-		PlayerType type = g.getPlayerType(p.getUniqueId());
-		if (type == null)
+		if (g == null) {
 			return false;
-		return gp.isAccessible(type, PermissionType.BLOCKS);
+		}
+		return gm.hasAccess(g.getName(), p.getUniqueId(), PermissionType.getPermission("DOORS"));
+	}
+	
+	public boolean canViewInformation(Player p) {
+		checkValid();
+		if (g == null) {
+			return false;
+		}
+		return gm.hasAccess(g.getName(), p.getUniqueId(), PermissionType.getPermission("REINFORCEMENT_INFO"));
+	}
+	
+	public boolean canMakeInsecure(Player p) {
+		checkValid();
+		if (g == null) {
+			return false;
+		}
+		return gm.hasAccess(g.getName(), p.getUniqueId(), PermissionType.getPermission("INSECURE_REINFORCEMENT"));
+	}
+	
+	public boolean canAcid(Player p) {
+		checkValid();
+		if (g == null) {
+			return false;
+		}
+		return gm.hasAccess(g.getName(), p.getUniqueId(), PermissionType.getPermission("ACIDBLOCK"));
+	}
+	
+	public boolean isSecurable() {
+		return (isContainer() || isDoor());
+	}
+	
+	public int getDamageMultiplier(){
+		if (g == null){
+			return 1;
+		}
+		Timestamp ts = NameAPI.getGroupManager().getTimestamp(g.getName());
+		
+		long shiftMultiplier = ((System.currentTimeMillis() - ts.getTime()) / (long)86400000) / (long)Citadel.getReinforcementManager().getDayMultiplier();
+		if (shiftMultiplier > 0) {
+			return 1 << shiftMultiplier;
+		}
+		return 1;
 	}
 	
 	/**
@@ -104,25 +144,43 @@ public class PlayerReinforcement extends Reinforcement{
      */
     public String getHealthText() {
         double health = getHealth();
-        if (health > 0.75) {
-            return "excellently";
-        } else if (health > 0.50) {
-            return "well";
-        } else if (health > 0.25) {
-            return "decently";
+        if (CitadelConfigManager.showHealthAsPercent()) {
+        	return health * 100 + "%";
         } else {
-            return "poorly";
+          if (health > 0.75) {
+              return "excellently";
+          } else if (health > 0.50) {
+              return "well";
+          } else if (health > 0.25) {
+              return "decently";
+          } else {
+              return "poorly";
+          }
         }
     }
     /**
      * Returns true if the block has an inventory that can be opened.
      * @return boolean
      */
-    public boolean isSecurable() {
+    public boolean rable() {
         Block block = getLocation().getBlock();
         return block.getState() instanceof InventoryHolder
                 || block.getState().getData() instanceof Openable || Utility.doorTypes.contains(block.getType());
     }
+    
+    /**
+     * @return True if the reinforced block is a door/trapdoor etc. or part of one
+     */
+    public boolean isDoor() {
+    	Block block = getLocation().getBlock();
+    	return Utility.doorTypes.contains(block.getType()) || block.getState().getData() instanceof Openable;
+    }
+    
+    public boolean isContainer() {
+    	return getLocation().getBlock().getState() instanceof InventoryHolder;
+    }
+    
+    
     /**
      * Returns the group this PlayerReinforcement is associated with.
      * @return group
@@ -137,7 +195,7 @@ public class PlayerReinforcement extends Reinforcement{
      */
     public void setGroup(Group g){
     	this.g = g;
-    	this.gp = NameAPI.getGroupManager().getPermissionforGroup(g);
+		this.gid = g.getGroupId();
     	isDirty = true;
     }
     /**
@@ -156,16 +214,19 @@ public class PlayerReinforcement extends Reinforcement{
         } else {
             verb = "Reinforced";
         }
-        return String.format("%s %s with %s",
-                verb,
-                getHealthText(),
-                getMaterial().name());
+        return String.format("%s %s with %s", verb, getHealthText(), getMaterial().name());
     }
     
     private void checkValid(){
+    	if (g == null) {
+    		Citadel.getInstance().getLogger().log(Level.WARNING, "CheckValid was called but the underlying group " + gid + " is gone for " + this.getLocation() + "!");
+    		return;
+    	}
     	if (!g.isValid()){ // incase it was recently merged/ deleted.
     		g = NameAPI.getGroupManager().getGroup(g.getGroupId());
-    		gp = NameAPI.getGroupManager().getPermissionforGroup(g);
+    		if (g == null) {
+    			Citadel.getInstance().getLogger().log(Level.INFO, "Group " + g.getGroupId() + " was deleted or merged but not marked invalid!");
+    		}
     		isDirty = true;
     	}
     }
@@ -176,6 +237,28 @@ public class PlayerReinforcement extends Reinforcement{
      * @return Returns the value of the group_id from the group it was created with.
      */
     public int getGroupId(){
+    	if (g == null) return gid;
     	return g.getGroupId();
     }
+
+	public String getAgeStatus() {
+		int d = this.getDamageMultiplier();
+		if(d < 2){
+			return "not decayed";
+		}
+		else if(d < 16){
+			return "partially decayed";
+		}
+		else if(d < 256){
+			return "highly decayed";
+		}
+		else if(d < 2048){
+			return "heavily decayed";
+		}
+		else if(d > 2047){
+			return "completely decayed";
+		}
+		else
+			return "";
+	}
 }

@@ -1,5 +1,6 @@
 package vg.civcraft.mc.citadel;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -7,7 +8,6 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import vg.civcraft.mc.citadel.command.CommandHandler;
@@ -17,12 +17,15 @@ import vg.civcraft.mc.citadel.listener.BlockListener;
 import vg.civcraft.mc.citadel.listener.EntityListener;
 import vg.civcraft.mc.citadel.listener.GroupsListener;
 import vg.civcraft.mc.citadel.listener.InventoryListener;
+import vg.civcraft.mc.citadel.listener.ShardListener;
 import vg.civcraft.mc.citadel.listener.WorldListener;
 import vg.civcraft.mc.citadel.misc.CitadelStatics;
 import vg.civcraft.mc.citadel.reinforcementtypes.NaturalReinforcementType;
 import vg.civcraft.mc.citadel.reinforcementtypes.NonReinforceableType;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
-import vg.civcraft.mc.namelayer.NameLayerPlugin;
+import vg.civcraft.mc.mercury.MercuryAPI;
+import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
+import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class Citadel extends JavaPlugin{
 	private static Logger logger;
@@ -52,6 +55,7 @@ public class Citadel extends JavaPlugin{
 		
 		registerListeners();
 		registerCommands();
+		registerNameLayerPermissions();
 	}
 	
 	public void onDisable(){
@@ -80,7 +84,33 @@ public class Citadel extends JavaPlugin{
 		getServer().getPluginManager().registerEvents(new EntityListener(), this);
 		getServer().getPluginManager().registerEvents(new InventoryListener(), this);
 		getServer().getPluginManager().registerEvents(new WorldListener(), this);
+		if (Bukkit.getPluginManager().isPluginEnabled("Mercury") && Bukkit.getPluginManager().isPluginEnabled("BetterShards")) {
+			getServer().getPluginManager().registerEvents(new ShardListener(), this);
+			MercuryAPI.registerPluginMessageChannel("Citadel");
+		}
 	}
+	
+	public void registerNameLayerPermissions() {
+		LinkedList <PlayerType> membersAndAbove = new LinkedList<PlayerType>();
+		membersAndAbove.add(PlayerType.MEMBERS);
+		membersAndAbove.add(PlayerType.MODS);
+		membersAndAbove.add(PlayerType.ADMINS);
+		membersAndAbove.add(PlayerType.OWNER);
+		LinkedList <PlayerType> modsAndAbove = new LinkedList<PlayerType>();
+		modsAndAbove.add(PlayerType.MODS);
+		modsAndAbove.add(PlayerType.ADMINS);
+		modsAndAbove.add(PlayerType.OWNER);
+		PermissionType.registerPermission("REINFORCE",(LinkedList<PlayerType>) modsAndAbove.clone());
+		PermissionType.registerPermission("ACIDBLOCK",(LinkedList<PlayerType>) modsAndAbove.clone());
+		PermissionType.registerPermission("REINFORCEMENT_INFO",(LinkedList<PlayerType>) membersAndAbove.clone());
+		PermissionType.registerPermission("BYPASS_REINFORCEMENT", (LinkedList<PlayerType>) modsAndAbove.clone());
+		PermissionType.registerPermission("DOORS",(LinkedList<PlayerType>) membersAndAbove.clone());
+		PermissionType.registerPermission("CHESTS",(LinkedList<PlayerType>) membersAndAbove.clone());
+		PermissionType.registerPermission("CROPS",(LinkedList<PlayerType>) membersAndAbove.clone());
+		PermissionType.registerPermission("INSECURE_REINFORCEMENT",(LinkedList<PlayerType>) membersAndAbove.clone());
+	}
+	
+	
 	/**
 	 * Registers the commands for Citadel.
 	 */
